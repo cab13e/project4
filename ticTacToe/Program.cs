@@ -8,11 +8,21 @@ namespace ticTacToe
 	class Game
 	{
 
-        public static void checkStates(StringBuilder status, List<Tuple<StringBuilder,double[]>> allStates, Stack<Tuple<StringBuilder,double[]>> gameStates)
+        public static void checkStates(StringBuilder status, Stack<Tuple<StringBuilder,double[]>> gameStates, int playerNum)
         {
             bool contains = false;
             int location = 0;
             Tuple<StringBuilder, double[]> nextMove;
+            List<Tuple<StringBuilder, double[]>> allStates;
+
+            if (playerNum == 0)
+            {
+                allStates = _globals.allStates0;
+            }
+            else
+            {
+                allStates = _globals.allStates1;
+            }
             foreach (var thing in allStates)
             {
                 if (thing.Item1 == status)
@@ -66,7 +76,7 @@ namespace ticTacToe
                 return false;
         }
 
-        public static void makeMove(Tuple<StringBuilder,double[]> currentState, int playerNum)
+        public static StringBuilder makeMove(Tuple<StringBuilder,double[]> currentState, int playerNum)
         {
             Random rand = new Random();
 
@@ -76,15 +86,59 @@ namespace ticTacToe
                 int count = 0;
                 foreach (var thing in currentState.Item2)
                     count++;
-                int next = Math.Max(rand.Next(count + 1), rand.Next(count+1));
-            }
+                int moveNum = Math.Max(rand.Next(count + 1), rand.Next(count+1));
 
+                currentState.Item1[moveNum] = 'x';
+            }
             else
             {
                 // treat as player 'o'
+                int count = 0;
+                foreach (var thing in currentState.Item2)
+                    count++;
+                int moveNum = Math.Max(rand.Next(count + 1), rand.Next(count + 1));
+
+                currentState.Item1[moveNum] = 'o';
             }
+            return currentState.Item1;
         }
+
+        public static void rewards(Stack<Tuple<StringBuilder,double[]>> player1, Stack<Tuple<StringBuilder,double[]>> player2)
+        {
+            
+        }
+
+        public static void gameLoop()
+        {
+            StringBuilder State = new StringBuilder("_________");
+            int player1 = 0, player2 = 1;
+            bool done = false;
+            Stack<Tuple<StringBuilder, double[]>> p1 = new Stack<Tuple<StringBuilder, double[]>>();
+            Stack<Tuple<StringBuilder, double[]>> p2 = new Stack<Tuple<StringBuilder, double[]>>();
+            Tuple<StringBuilder, double[]> p1States;
+            Tuple<StringBuilder, double[]> p2States;
+            while(!done)
+            {
+                done = isFinished(State);
+                checkStates(State,p1,player1);
+                p1States = p1.Peek();
+                makeMove(p1States,player1);
+                done = isFinished(State);
+                checkStates(State,p2,player2);
+                p2States = p2.Peek();
+                makeMove(p2States,player2);
+            }
+            rewards(p1,p2);
+        }
+
+
 	}
+
+    class _globals
+    {
+        public static List<Tuple<StringBuilder, double[]>> allStates0;
+        public static List<Tuple<StringBuilder, double[]>> allStates1;
+    }
 
 
 	class MainClass

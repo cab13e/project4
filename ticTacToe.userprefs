@@ -1,7 +1,7 @@
 ﻿<Properties StartupConfiguration="{28100E63-9F85-4EBE-825F-0913562E5A4B}|Default">
   <MonoDevelop.Ide.Workbench ActiveDocument="ticTacToe/Program.cs">
     <Files>
-      <File FileName="ticTacToe/Program.cs" Line="46" Column="33" />
+      <File FileName="ticTacToe/Program.cs" Line="81" Column="17" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|x86" />
