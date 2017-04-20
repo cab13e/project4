@@ -1,19 +1,20 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 namespace ticTacToe
 {
-	class Game
-	{
+    class Game
+    {
 
-        public static void checkStates(StringBuilder status, Stack<Tuple<StringBuilder,double[]>> gameStates, int playerNum)
+        public static Tuple<StringBuilder, double[]> checkStates(StringBuilder status, Stack<Tuple<StringBuilder, double[]>> gameStates, int playerNum)
         {
             bool contains = false;
             int location = 0;
             Tuple<StringBuilder, double[]> nextMove;
-            List<Tuple<StringBuilder, double[]>> allStates;
+            List<Tuple<StringBuilder, double[]>> allStates = new List<Tuple<StringBuilder, double[]>>();
 
             if (playerNum == 0)
             {
@@ -23,6 +24,7 @@ namespace ticTacToe
             {
                 allStates = _globals.allStates1;
             }
+
             foreach (var thing in allStates)
             {
                 if (thing.Item1 == status)
@@ -33,13 +35,13 @@ namespace ticTacToe
                 location++;
             }
 
-            if(contains)
+            if (contains)
             {
                 nextMove = allStates[location];
             }
             else
             {
-                double[] values = new double[8];
+                double[] values = new double[9];
 
                 for (int i = 0; i < 8; i++)
                 {
@@ -49,9 +51,15 @@ namespace ticTacToe
                         values[i] = 0;
                 }
                 allStates.Add(Tuple.Create(status, values));
+
+                if (playerNum == 0)
+                    _globals.allStates0.Add(Tuple.Create(status, values));
+                else
+                    _globals.allStates1.Add(Tuple.Create(status, values));
+
                 nextMove = allStates[location];
             }
-            gameStates.Push(nextMove);
+            return nextMove;
         }
 
         public static bool isFinished(StringBuilder status)
@@ -76,36 +84,83 @@ namespace ticTacToe
                 return false;
         }
 
-        public static StringBuilder makeMove(Tuple<StringBuilder,double[]> currentState, int playerNum)
+        public static StringBuilder makeMove(Tuple<StringBuilder, double[]> currentState, int playerNum, Stack<int> moves)
         {
             Random rand = new Random();
 
             if (playerNum == 0)
             {
                 // treat as player 'x'
-                int count = 0;
-                foreach (var thing in currentState.Item2)
-                    count++;
-                int moveNum = Math.Max(rand.Next(count + 1), rand.Next(count+1));
+                int moveNum = Math.Max(rand.Next(9), rand.Next(9));
 
                 currentState.Item1[moveNum] = 'x';
+                moves.Push(moveNum);
             }
             else
             {
                 // treat as player 'o'
-                int count = 0;
-                foreach (var thing in currentState.Item2)
-                    count++;
-                int moveNum = Math.Max(rand.Next(count + 1), rand.Next(count + 1));
+                int moveNum = Math.Max(rand.Next(9), rand.Next(9));
 
                 currentState.Item1[moveNum] = 'o';
+                moves.Push(moveNum);
             }
             return currentState.Item1;
         }
 
-        public static void rewards(Stack<Tuple<StringBuilder,double[]>> player1, Stack<Tuple<StringBuilder,double[]>> player2)
+        public static void rewards(Stack<Tuple<StringBuilder, double[]>> player1, Stack<Tuple<StringBuilder, double[]>> player2, Stack<int> moveNum0, Stack<int> moveNum1, bool whoWon)
         {
-            
+            double valueChange0 = .1;
+            double valueChange1 = .1;
+
+            while (player1.Count > 0)
+            {
+                var next = player1.Pop();
+                var num = moveNum0.Pop();
+                int counter = 0;
+
+                while(next.Item1 != _globals.allStates0[counter].Item1)
+                {
+                    if (counter >= player1.Count)
+                        break;
+                    counter++;
+                }
+
+                if (whoWon)
+                {
+                    _globals.allStates0[counter].Item2[num] += valueChange0;
+                    valueChange0 *= .2;
+                }
+                else
+                {
+                    _globals.allStates0[counter].Item2[num] -= valueChange0;
+                    valueChange0 *= .2;
+                }
+            }
+
+            while (player2.Count > 0)
+            {
+                var next = player2.Pop();
+                var num = moveNum1.Pop();
+                int counter = 0;
+
+                while (next.Item1 != _globals.allStates1[counter].Item1)
+                {
+                    if (counter >= player2.Count)
+                        break;
+                    counter++;
+                }
+
+                if (!whoWon)
+                {
+                    _globals.allStates1[counter].Item2[num] += valueChange1;
+                    valueChange1 *= .2;
+                }
+                else
+                {
+                    _globals.allStates1[counter].Item2[num] -= valueChange1;
+                    valueChange1 *= .2;
+                }
+            }
         }
 
         public static void gameLoop()
@@ -113,26 +168,38 @@ namespace ticTacToe
             StringBuilder State = new StringBuilder("_________");
             int player1 = 0, player2 = 1;
             bool done = false;
+            bool p1Wins = false;
             Stack<Tuple<StringBuilder, double[]>> p1 = new Stack<Tuple<StringBuilder, double[]>>();
             Stack<Tuple<StringBuilder, double[]>> p2 = new Stack<Tuple<StringBuilder, double[]>>();
             Tuple<StringBuilder, double[]> p1States;
             Tuple<StringBuilder, double[]> p2States;
-            while(!done)
+            Stack<int> moveNum0 = new Stack<int>();
+            Stack<int> moveNum1 = new Stack<int>();
+            while (!done)
             {
                 done = isFinished(State);
-                checkStates(State,p1,player1);
+                var next = checkStates(State, p1, player1);
+                p1.Push(next);
                 p1States = p1.Peek();
-                makeMove(p1States,player1);
+                State = makeMove(p1States, player1, moveNum0);
                 done = isFinished(State);
-                checkStates(State,p2,player2);
+                if (done)
+                {
+                    p1Wins = true;
+                    break;
+                }
+                next = checkStates(State, p2, player2);
+                p2.Push(next);
                 p2States = p2.Peek();
-                makeMove(p2States,player2);
+                State = makeMove(p2States, player2, moveNum1);
             }
-            rewards(p1,p2);
+            //Console.WriteLine(State);
+            rewards(p1, p2, moveNum0, moveNum1, p1Wins);
+            //Console.WriteLine("Finished game");
         }
 
 
-	}
+    }
 
     class _globals
     {
@@ -141,11 +208,45 @@ namespace ticTacToe
     }
 
 
-	class MainClass
-	{
-		public static void Main(String[] args)
-		{
-			
-		}
-	}
+    class MainClass
+    {
+        public static void Main(String[] args)
+        {
+            _globals.allStates0 = new List<Tuple<StringBuilder, double[]>>();
+            _globals.allStates1 = new List<Tuple<StringBuilder, double[]>>();
+
+            Console.WriteLine("Welcome to tic tac toe. To play with a human, type human. To train, type train.");
+            //var read = Console.ReadLine();
+
+            int gameCounter = 0;
+            while (gameCounter < 100)
+            {
+                Game.gameLoop();
+                Console.WriteLine("Finished game " + gameCounter);
+                gameCounter++;
+            }
+
+            Console.WriteLine("Player 1");
+            foreach(var thing in _globals.allStates0)
+            {
+                Console.WriteLine(thing.Item1);
+                foreach(var blep in thing.Item2)
+                {
+                    Console.Write(blep + ",");
+                }
+                Console.WriteLine();
+            }
+
+            Console.WriteLine("player 2");
+            foreach (var thing in _globals.allStates1)
+            {
+                Console.WriteLine(thing.Item1);
+                foreach (var blep in thing.Item2)
+                {
+                    Console.Write(blep + ",");
+                }
+                Console.WriteLine();
+            }
+        }
+    }
 }

@@ -1,0 +1,5 @@
+/Users/collinblanchard/Desktop/AI/project4/ticTacToe/bin/Debug/ticTacToe.exe
+/Users/collinblanchard/Desktop/AI/project4/ticTacToe/bin/Debug/ticTacToe.pdb
+/Users/collinblanchard/Desktop/AI/project4/ticTacToe/obj/x86/Debug/ticTacToe.csproj.CoreCompileInputs.cache
+/Users/collinblanchard/Desktop/AI/project4/ticTacToe/obj/x86/Debug/ticTacToe.exe
+/Users/collinblanchard/Desktop/AI/project4/ticTacToe/obj/x86/Debug/ticTacToe.pdb
